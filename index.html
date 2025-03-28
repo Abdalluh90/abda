@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عيد فطر سعيد</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; direction: rtl; }
+        body { text-align: center; font-family: 'Cairo', sans-serif; background: #121212; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 20px; }
+        .container { background: #222; padding: 25px; border-radius: 15px; box-shadow: 0px 5px 20px rgba(255, 223, 87, 0.3); width: 100%; max-width: 400px; text-align: center; border: 2px solid #ffdd57; }
+        h1 { font-size: 22px; color: #f8c32d; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        h1 i { color: #ffdd57; }
+        p { font-size: 16px; margin-bottom: 15px; }
+        input { padding: 12px; margin: 8px; font-size: 16px; border-radius: 5px; text-align: center; width: 30%; border: 2px solid #ffdd57; background: #3c3c3c; color: white; }
+        input:focus { border-color: #ffd700; box-shadow: 0 0 10px rgba(255, 221, 87, 0.5); outline: none; }
+        button { background: #ffdd57; color: black; font-size: 16px; padding: 10px; border: none; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; }
+        button:hover { background: #ffcc00; }
+        #result { margin-top: 20px; font-size: 18px; font-weight: bold; color: #ffdd57; padding: 15px; background: #333; border-radius: 10px; display: none; border: 1px solid #ffdd57; }
+        ul { list-style: none; padding: 0; }
+        li { background: #444; padding: 12px; margin: 6px 0; border-radius: 8px; font-size: 16px; opacity: 0; transform: translateY(10px); animation: fadeIn 0.8s ease-in forwards; }
+        li::before { content: "🌙 "; color: #ffdd57; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #ccc;
+            text-align: center;
+            padding: 10px;
+        }
+        .footer span {
+            color: #ffdd57;
+            font-weight: bold;
+        }
+        .birthdate-fields { display: flex; justify-content: space-between; width: 100%; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-moon"></i> عيد فطر سعيد! <i class="fas fa-star"></i></h1>
+        <p>🎊 أدخل اسمك وتاريخ ميلاد لإظهار التهنئة! 🎊</p>
+        <input type="text" id="name" placeholder="اسمك"><br>
+        <div class="birthdate-fields">
+            <input type="number" id="day" placeholder="اليوم" min="1" max="31">
+            <input type="number" id="month" placeholder="الشهر" min="1" max="12">
+            <input type="number" id="year" placeholder="السنة" min="1900" max="2023">
+        </div>
+        <button onclick="saveData()">الحصول على العدية</button>
+        <div id="result">
+            <ul id="messages"></ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; جميع الحقوق محفوظة <span>عبدالله سيد</span> - <script>document.write(new Date().getFullYear());</script>
+    </div>
+
+    <script>
+        // **🔹 إعداد Firebase 🔹**
+        const firebaseConfig = {
+            apiKey: "AIzaSyBb2Bo1ydUJZCfddT_ETyLZBM2a44BWnH8",
+            authDomain: "eid1-96724.firebaseapp.com",
+            databaseURL: "https://eid1-96724-default-rtdb.firebaseio.com",
+            projectId: "eid1-96724",
+            storageBucket: "eid1-96724.appspot.com",
+            messagingSenderId: "630803912976",
+            appId: "1:630803912976:web:bafa7ec6b2d9a9e440ad95",
+            measurementId: "G-70229PVWJL"
+        };
+
+        // 🔹 تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // دالة لحساب العمر بدقة
+        function calculateAge(birthdate) {
+            let today = new Date();
+            let birthDate = new Date(birthdate);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            let monthDifference = today.getMonth() - birthDate.getMonth();
+
+            if (
+                monthDifference < 0 || 
+                (monthDifference === 0 && today.getDate() < birthDate.getDate())
+            ) {
+                age--;
+            }
+
+            return age;
+        }
+
+        // دالة لعرض التاريخ الحالي بتنسيق أجمل
+        function getCurrentFormattedDate() {
+            let today = new Date();
+            let options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return today.toLocaleDateString('ar-EG', options); // تنسيق باللغة العربية
+        }
+
+        // دالة حفظ البيانات
+        function saveData() {
+            let name = document.getElementById("name").value.trim();
+            let day = document.getElementById("day").value.trim();
+            let month = document.getElementById("month").value.trim();
+            let year = document.getElementById("year").value.trim();
+            let resultDiv = document.getElementById("result");
+            let messageList = document.getElementById("messages");
+
+            // التحقق من صحة البيانات
+            if (name === "" || day === "" || month === "" || year === "") {
+                alert("يرجى إدخال جميع البيانات!");
+                return;
+            }
+
+            // التحقق من صحة التاريخ
+            if (isNaN(day) || isNaN(month) || isNaN(year) || day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > new Date().getFullYear()) {
+                alert("تاريخ الميلاد غير صحيح!");
+                return;
+            }
+
+            // إنشاء تاريخ الميلاد
+            let birthdateInput = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            let birthdate = new Date(birthdateInput);
+
+            // التحقق من صحة التاريخ (عدد الأيام في الشهر)
+            if (birthdate.getDate() !== parseInt(day) || birthdate.getMonth() + 1 !== parseInt(month)) {
+                alert("تاريخ الميلاد غير صحيح! (تحقق من عدد الأيام في الشهر)");
+                return;
+            }
+
+            // حساب العمر بدقة
+            let age = calculateAge(birthdateInput);
+
+            // الحصول على التاريخ الحالي
+            let currentDate = getCurrentFormattedDate();
+
+            let messages = [
+                `يا ${name}، لقد مر عليك ${age} عامًا! 🎂`,
+                `اليوم هو ${currentDate}. 🌙`,
+                "🌙 عيدك مبارك وسعيد! كل عام وأنت بألف خير! ✨",
+                "يتمنى لكم عبدالله عيد مبارك سعيد! 🤲",
+                "تقبل الله منا ومنكم صالح الأعمال! 🤲",
+                "أسأل الله لك فرحة تدوم وسعادة تملأ قلبك! 😊",
+                "نتمنى لك عيدًا مليئًا بالفرح والسرور! 🎉",
+                "استمتع بوقتك وأمضِ لحظات جميلة مع أحبائك! 💫"
+            ];
+
+            messageList.innerHTML = "";
+            resultDiv.style.display = "block";
+
+            let delay = 0;
+            messages.forEach(msg => {
+                setTimeout(() => {
+                    let li = document.createElement("li");
+                    li.textContent = msg;
+                    messageList.appendChild(li);
+                }, delay);
+                delay += 1000; 
+            });
+
+            // **🔹 حفظ البيانات في Firebase 🔹**
+            let userId = db.ref('users').push().key;
+            db.ref('users/' + userId).set({
+                name: name,
+                birthdate: birthdateInput,
+                age: age,
+                dateAdded: firebase.database.ServerValue.TIMESTAMP // تخزين الوقت الحالي من السيرفر
+            }).then(() => {
+                console.log("✅ تم حفظ البيانات بنجاح!");
+            }).catch(error => {
+                console.error("❌ خطأ في حفظ البيانات:", error);
+            });
+        }
+    </script>
+</body>
+</html>
